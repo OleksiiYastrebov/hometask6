@@ -1,4 +1,7 @@
+using System.Text;
+using FluentValidation;
 using hometask6.Data;
+using hometask6.Dtos;
 using hometask6.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,15 +13,17 @@ namespace hometask6.Controllers;
 public class ExpenseController : ControllerBase
 {
     private readonly ApplicationContext _context;
+    private readonly IValidator<ExpenseRequestDto> _validator;
 
-    public ExpenseController(ApplicationContext context)
+    public ExpenseController(ApplicationContext context, IValidator<ExpenseRequestDto> validator)
     {
         _context = context;
+        _validator = validator;
     }
 
     [HttpGet]
     [Route("")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> FindAllAsync()
     {
         var expenses = await _context.Expenses.Select(e => e).ToListAsync();
         return Ok(expenses);
@@ -26,32 +31,75 @@ public class ExpenseController : ControllerBase
 
     [HttpGet]
     [Route("{id:guid}")]
-    public async Task<IActionResult> Find(Guid id)
+    public async Task<IActionResult> FindOneAsync(Guid id)
     {
         return Ok(await _context.Expenses.FindAsync(id));
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Expense exp)
+    public async Task<IActionResult> CreateAsync(ExpenseRequestDto exp)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        var validationRes = await _validator.ValidateAsync(exp);
+        if (!validationRes.IsValid)
+        {
+            var stringBuilder = new StringBuilder();
+            foreach (var error in validationRes.Errors)
+            {
+                stringBuilder.Append(error.ErrorMessage);
+                stringBuilder.Append('\n');
+            }
 
-        _context.Expenses.Add(exp);
+            return BadRequest(stringBuilder.ToString());
+        }
+        
+        if (await _context.Categories.FindAsync(exp.CategoryId) is null)
+        {
+            return BadRequest("There is no category with such ID");
+        }
+        
+        _context.Expenses.Add
+        (
+            new Expense
+            {
+                Id = Guid.CreateVersion7(),
+                CategoryId = exp.CategoryId,
+                Price = exp.Price,
+                Comment = exp.Comment
+            }
+        );
+        
         await _context.SaveChangesAsync();
 
         return Created();
     }
 
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] Expense exp)
+    [Route("{id:guid}")]
+    public async Task<IActionResult> UpdateAsync(ExpenseRequestDto exp, Guid id)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        var validationRes = await _validator.ValidateAsync(exp);
+        if (!validationRes.IsValid)
+        {
+            var stringBuilder = new StringBuilder();
+            foreach (var error in validationRes.Errors)
+            {
+                stringBuilder.Append(error.ErrorMessage);
+                stringBuilder.Append('\n');
+            }
 
-        var dbExpense = await _context.Expenses.FindAsync(exp.Id);
+            return BadRequest(stringBuilder.ToString());
+        }
+    
+        if (await _context.Categories.FindAsync(exp.CategoryId) is null)
+        {
+            return BadRequest("There is no category with such ID");
+        }
+        
+        var dbExp = await _context.Expenses.FindAsync(id);
 
-        dbExpense!.Category = exp.Category;
-        dbExpense.Price = exp.Price;
-        dbExpense.Comment = exp.Comment;
+        dbExp!.CategoryId = exp.CategoryId;
+        dbExp.Price = exp.Price;
+        dbExp.Comment = exp.Comment;
 
         await _context.SaveChangesAsync();
 
