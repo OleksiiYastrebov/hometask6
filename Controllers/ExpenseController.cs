@@ -25,15 +25,25 @@ public class ExpenseController : ControllerBase
     [Route("")]
     public async Task<IActionResult> FindAllAsync()
     {
-        var expenses = await _context.Expenses.Select(e => e).ToListAsync();
-        return Ok(expenses);
+        return Ok(
+            await _context.Expenses
+            .Select(e => new ExpenseResponseDto(e.Id, e.CategoryId, e.Price, e.Comment, e.DateTime))
+            .ToListAsync()
+            );
     }
 
     [HttpGet]
     [Route("{id:guid}")]
     public async Task<IActionResult> FindOneAsync(Guid id)
     {
-        return Ok(await _context.Expenses.FindAsync(id));
+        var exp = await _context.Expenses.FindAsync(id);
+        
+        if (exp is null)
+        {
+            return Empty;
+        } 
+        
+        return Ok(new ExpenseResponseDto(exp.Id, exp.CategoryId, exp.Price, exp.Comment, exp.DateTime));
     }
 
     [HttpPost]
@@ -64,7 +74,8 @@ public class ExpenseController : ControllerBase
                 Id = Guid.CreateVersion7(),
                 CategoryId = exp.CategoryId,
                 Price = exp.Price,
-                Comment = exp.Comment
+                Comment = exp.Comment,
+                DateTime = exp.DateTime ?? DateTime.Now
             }
         );
         
