@@ -116,4 +116,53 @@ public class ExpenseController : ControllerBase
 
         return Ok();
     }
+    
+    [HttpGet]
+    [Route("month")]
+    public async Task<IActionResult> GetExpensesByMonth([FromQuery] DateTime fromDate)
+    {
+        var targetMonth = fromDate.Month;
+        var targetYear = fromDate.Year;
+
+        var expenses = await _context.Expenses
+            .AsNoTracking()
+            .Where(e => e.DateTime.Month == targetMonth && e.DateTime.Year == targetYear)
+            .Include(e => e.Category)
+            .OrderBy(e => e.DateTime)
+            .Select(e => new
+            {
+                e.Id,
+                e.Price,
+                e.Comment,
+                e.DateTime,
+                CategoryId = e.CategoryId,
+                CategoryName = e.Category.Name
+            })
+            .ToListAsync();
+        
+        return Ok(expenses);
+    }
+    
+    [HttpGet]
+    [Route("monthly-summary")]
+    public async Task<IActionResult> GetMonthlySummary([FromQuery] DateTime fromDate)
+    {
+        var targetMonth = fromDate.Month;
+        var targetYear = fromDate.Year;
+
+        var result = await _context.Expenses
+            .AsNoTracking()
+            .Where(e => e.DateTime.Month == targetMonth && e.DateTime.Year == targetYear)
+            .GroupBy(e => new { e.CategoryId, e.Category.Name }) // Use navigation property directly
+            .Select(g => new
+            {
+                categoryId = g.Key.CategoryId,
+                categoryName = g.Key.Name,
+                total = g.Sum(e => e.Price)
+            })
+            .ToListAsync();
+
+        return Ok(result);
+    }
+
 }
