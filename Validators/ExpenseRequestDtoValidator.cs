@@ -10,5 +10,6 @@ public class ExpenseRequestDtoValidator : AbstractValidator<ExpenseRequestDto>
         RuleFor(dto => dto.CategoryId).NotEmpty();
         RuleFor(dto => dto.Price).GreaterThanOrEqualTo(0.01m).LessThanOrEqualTo(99999999.99m); // ! decimal(10,2)
         RuleFor(dto => dto.Comment).MaximumLength(255);
+        RuleFor(dto => dto.DateTime);
     }
 }
