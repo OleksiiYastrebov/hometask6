@@ -117,6 +117,11 @@ public class CategoryController : ControllerBase
             return BadRequest("There is no category with such id");
         }
 
+        if (await _context.Categories.CountAsync() == 1)
+        {
+            return BadRequest("You cannot delete last category");
+        }
+
         try
         {
             _context.Categories.Remove(res);
