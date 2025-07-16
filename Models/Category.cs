@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace hometask6.Models;
 
+[Index(nameof(Name), IsUnique = true)]
 public class Category
 {
     public Guid Id { get; set; }
