@@ -24,7 +24,11 @@ public class CategoryController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
-        return Ok(await _context.Categories.Select(c => c).ToListAsync());
+        return Ok(
+            await _context.Categories
+                .Select(c => new CategoryResponseDto(c.Id, c.Name))
+                .ToListAsync()
+            );
     }
 
     [HttpPost]
@@ -54,9 +58,9 @@ public class CategoryController : ControllerBase
             );
             await _context.SaveChangesAsync();
         }
-        catch (Exception e)
+        catch (DbUpdateException)
         {
-            return Problem(e.Message);
+            return BadRequest("Duplicate name for categories not allowed");
         }
 
         return Created();
@@ -93,9 +97,9 @@ public class CategoryController : ControllerBase
 
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException e)
+        catch (DbUpdateException)
         {
-            return BadRequest("Duplicate name not allowed");
+            return BadRequest("Duplicate name for categories not allowed");
         }
 
         return Ok();
@@ -118,7 +122,7 @@ public class CategoryController : ControllerBase
             _context.Categories.Remove(res);
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException e)
+        catch (DbUpdateException)
         {
             return Conflict("Can`t delete this category because some expenses use it");
         }
