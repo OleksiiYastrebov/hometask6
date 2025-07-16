@@ -121,6 +121,11 @@ public class ExpenseController : ControllerBase
     [Route("month")]
     public async Task<IActionResult> GetExpensesByMonth([FromQuery] DateTime fromDate)
     {
+        if (fromDate.Equals(new DateTime()))
+        {
+            fromDate = DateTime.Today;
+        }
+        
         var targetMonth = fromDate.Month;
         var targetYear = fromDate.Year;
 
@@ -147,6 +152,11 @@ public class ExpenseController : ControllerBase
     [Route("monthly-summary")]
     public async Task<IActionResult> GetMonthlySummary([FromQuery] DateTime fromDate)
     {
+        if (fromDate.Equals(new DateTime()))
+        {
+            fromDate = DateTime.Today;
+        }
+        
         var targetMonth = fromDate.Month;
         var targetYear = fromDate.Year;
 
