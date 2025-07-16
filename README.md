@@ -14,4 +14,4 @@
 4. Run app.
     ```bash
     dotnet run
-5. Visit http://localhost:5000/scalar for complete api docs. Or visit http://localhost:5000/openapi/v1.json if you prefer json.
+5. Visit http://localhost:5000/scalar for complete api docs. Or visit http://localhost:5000/openapi/v1.json if you prefer openapi.
